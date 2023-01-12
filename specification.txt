@@ -1,0 +1,75 @@
+class Request:
+    properties:
+        - processingTime (sampled from distribution, known at arrival)
+	- type (known at arrival)
+        - isProcessed
+	- isCancelled
+    
+    methods:
+        - startProcessing
+        - stopProcessing
+
+class Queue:
+    properties:
+        - length
+    methods:
+        - push
+        - pop
+
+class Server:
+    properties:
+        - queue: Queue
+    
+    methods:
+        - startServingNext
+
+class Source:
+    properties:
+        - requestTypes
+        - loadBalancer: LoadBalancer (connected to the load balancer)
+
+    methods:
+        - scheduleRequest (sample request type and next interarrival time)   
+
+class LoadBalancer:
+    properties:
+        - nServers
+        - servers: list
+	- assignAlgorithm
+	- nServerAlgorithm: data -> nServers
+    
+    methods:
+        - processRequest 
+	- onPeriodEnd
+		- retrain model based on new data
+		- determine next period nServer
+
+class Event:
+    properties:
+        - triggerTime
+        - callBack: Callable
+
+
+class Environment: #processes events 
+    properties:
+        - currentTime
+        - stopTime 
+        - events: OrderedDict
+	- data
+		- nCancelled
+		- nExecuted
+		- nServersOpen
+
+    methods:
+        - processEvents
+
+req = ...
+newEvent = Event(time, lambda: loadBalancer.processRequest(req))
+newEvent = Event(time, loadBalancer.processRequest, req)
+
+
+	
+    
+
+
+
