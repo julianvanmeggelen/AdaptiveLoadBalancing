@@ -1,6 +1,7 @@
 import unittest
 from Event import Event
 from Environment import Environment
+from Source import Source, TestLoadBalancer 
 
 class TestValue:
     def __init__(self, val):
@@ -26,7 +27,6 @@ class EventTest(unittest.TestCase):
         self.assertTrue(e.isTriggered, 2)
         self.assertEqual(a.val, 2)
 
-
 class  EnvironmentTest(unittest.TestCase):
     def testExecutionOrder(self):
         a = []
@@ -49,10 +49,34 @@ class  EnvironmentTest(unittest.TestCase):
         self.assertListEqual(env.log["test"], [1,2]) #test correct order
         self.assertListEqual(env.logTime["test"], [2,3]) #test correct timestamps
 
-        
+class SourceTest(unittest.TestCase):
+    def testEventScheduling(self):
+        stopTime = 10
+        samplingInterval = 0.1
+        env = Environment(stopTime=stopTime)
+        loadBalancer = TestLoadBalancer()
+        source = Source(samplingInterval, 0.5, [(0.5,1,1),(0.5,2,2)], loadBalancer, env)
+        source.scheduleNextSampleEvent()
+        env.run(debug=True)
+        nSamples = len(env.log["sampleEvent"])
+        self.assertEqual(nSamples, stopTime/samplingInterval) #number of sample events should be stopTime/samplingInterval
 
+    def testArrivalSampling(self):
+        stopTime = 10
+        samplingInterval = 0.1
+        env = Environment(stopTime=stopTime)
+        loadBalancer = TestLoadBalancer()
+        requestProb = 0.5
+        source = Source(samplingInterval, requestProb, [(0.5,1,1),(0.5,2,2)], loadBalancer, env)
+        source.scheduleNextSampleEvent()
+        env.run(debug=True)
+        nSamples = len(env.log["sampleEvent"])
+        nArrival = len(env.log["arrivalEvent"])
+        print(nSamples, nArrival)
+        print(nArrival/nSamples)
+        self.assertAlmostEqual(nArrival/nSamples, requestProb, delta=0.1) #test sample prob of arrival approximately equal to provided requestProb
 
-
+    #def testRequestTypeSampling(self):
     
 if __name__ == '__main__':
     unittest.main()

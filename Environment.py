@@ -42,7 +42,7 @@ class Environment:
         e.execute()
         if self.debug: print(f"{self.currentTime} | Handled event at time {e.time} with name {e.name}")
 
-    def logData(self, key, data):
+    def logData(self, key, data=1):
         """Log arbitrary data to the environment
         
         Parameters
@@ -68,9 +68,11 @@ class Environment:
         debug : bool
             Print debugging messages?
         """
-        while self.currentTime < self.stopTime and len(self.eventQueue) > 0:   
+
+        while len(self.eventQueue) > 0:   
             self.debug = debug
             nextEventTime, nextEvent = self.eventQueue.popitem(index=0)
+            if nextEventTime > self.stopTime: break
             self._handleEvent(nextEvent)
         if len(self.eventQueue) == 0: warnings.warn("Event queueu is empty before stopTime was reached")
         return self

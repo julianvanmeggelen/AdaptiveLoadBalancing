@@ -1,9 +1,9 @@
 class Request:
     properties:
         - processingTime (sampled from distribution, known at arrival)
-	- type (known at arrival)
+	    - type (known at arrival)
         - isProcessed
-	- isCancelled
+	    - isCancelled
     
     methods:
         - startProcessing
@@ -35,13 +35,13 @@ class LoadBalancer:
     properties:
         - nServers
         - servers: list
-	- assignAlgorithm
-	- nServerAlgorithm: data -> nServers
+	    - assignAlgorithm
+	    - nServerAlgorithm: data -> nServers
     
     methods:
         - processRequest 
-	- onPeriodEnd
-		- retrain model based on new data
+	    - onPeriodEnd
+		    - retrain model based on new data
 		- determine next period nServer
 
 class Event:
