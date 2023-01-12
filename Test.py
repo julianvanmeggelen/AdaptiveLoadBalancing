@@ -36,7 +36,7 @@ class  EnvironmentTest(unittest.TestCase):
         env.scheduleEvent(e1)
         env.scheduleEvent(e2)
         env.run()
-        self.assertEqual(a[0],2)
+        self.assertEqual(a[0],1)
         self.assertEqual(a[1],2)
     
     def testLogData(self):
