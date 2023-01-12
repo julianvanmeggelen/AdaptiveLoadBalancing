@@ -7,4 +7,5 @@ jobs:
       - name: Prepare repo
         uses: actions/checkout@master
       - name: Test
-        uses: onichandame/python-test-action@master
+        - run: pip install -r requirements.txt
+        - run: python Test.py
