@@ -27,8 +27,8 @@ class Environment:
         e : Event
             The event that needs to be scheduled
         """
-        self.events[e.time] = e
-        if self.debug: print(f"{self.current_time} | Planned event for time {e.time} with name {e.name}")
+        self.eventQueue[e.time] = e
+        if self.debug: print(f"{self.currentTime} | Planned event for time {e.time} with name {e.name}")
     
     def _handleEvent(self, e:Event):
         """Handle event to eventqueue (private method)
@@ -40,7 +40,7 @@ class Environment:
         """
         self.currentTime = e.time
         e.execute()
-        if self.debug: print(f"{self.current_time} | Handled event at time {e.time} with name {e.name}")
+        if self.debug: print(f"{self.currentTime} | Handled event at time {e.time} with name {e.name}")
 
     def logData(self, key, data):
         """Log arbitrary data to the environment
@@ -53,14 +53,14 @@ class Environment:
             Data to log to the stream 
         """
 
-        if key not in self.data.keys():
+        if key not in self.log.keys():
             self.log[key] = [data]
             self.logTime[key] = [self.currentTime]
         else:
             self.log[key].append(data)
             self.logTime[key].append(self.currentTime)
 
-    def run(self, debug):
+    def run(self, debug=True):
         """Run environment untill the stopTime is reached or untill the eventQueue is empty
         
         Parameters
@@ -68,13 +68,11 @@ class Environment:
         debug : bool
             Print debugging messages?
         """
-        while self.currentTime < self.stopTime:
-            if len(self.eventQueue) > 0:
-                warnings.warn("Event queueu is empty before stopTime was reached")
-                
+        while self.currentTime < self.stopTime and len(self.eventQueue) > 0:   
             self.debug = debug
             nextEventTime, nextEvent = self.eventQueue.popitem(index=0)
-            self.handleEvent(nextEvent)
+            self._handleEvent(nextEvent)
+        if len(self.eventQueue) == 0: warnings.warn("Event queueu is empty before stopTime was reached")
         return self
         
     
