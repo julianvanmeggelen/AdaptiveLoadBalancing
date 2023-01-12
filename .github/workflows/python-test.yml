@@ -6,6 +6,7 @@ jobs:
     steps:
       - name: Prepare repo
         uses: actions/checkout@master
+      - name: Install
+        run: pip install -r requirements.txt
       - name: Test
-        - run: pip install -r requirements.txt
-        - run: python Test.py
+        run: python Test.py
