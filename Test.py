@@ -2,6 +2,8 @@ import unittest
 from Event import Event
 from Environment import Environment
 from Source import Source, TestLoadBalancer 
+from Request import Request
+from Server import Server
 
 class TestValue:
     def __init__(self, val):
@@ -55,7 +57,7 @@ class SourceTest(unittest.TestCase):
         samplingInterval = 0.1
         env = Environment(stopTime=stopTime)
         loadBalancer = TestLoadBalancer()
-        source = Source(samplingInterval, 0.5, [(0.5,1,1),(0.5,2,2)], loadBalancer, env)
+        source = Source(samplingInterval, 0.5, [(0.5,1,1,10),(0.5,2,2,10)], loadBalancer, env)
         source.scheduleNextSampleEvent()
         env.run(debug=True)
         nSamples = len(env.log["sampleEvent"])
@@ -67,7 +69,7 @@ class SourceTest(unittest.TestCase):
         env = Environment(stopTime=stopTime)
         loadBalancer = TestLoadBalancer()
         requestProb = 0.5
-        source = Source(samplingInterval, requestProb, [(0.5,1,1),(0.5,2,2)], loadBalancer, env)
+        source = Source(samplingInterval, requestProb, [(0.5,1,1,10),(0.5,2,2,10)], loadBalancer, env)
         source.scheduleNextSampleEvent()
         env.run(debug=True)
         nSamples = len(env.log["sampleEvent"])
@@ -77,6 +79,41 @@ class SourceTest(unittest.TestCase):
         self.assertAlmostEqual(nArrival/nSamples, requestProb, delta=0.1) #test sample prob of arrival approximately equal to provided requestProb
 
     #def testRequestTypeSampling(self):
+
+class ServerTest(unittest.TestCase):
+    def testServer(self):
+        env = Environment(stopTime=10)
+        server = Server(environment = env)
+
+        for i in range(10): #assign 10 requests to the server, should be all finished within the time limit
+            req = Request(0, 1, 10, env)
+            env.scheduleEvent(Event(0, lambda: server.assignRequest(req)))
+            print(len(env.eventQueue))
+        
+        print(len(env.eventQueue))
+        env.run(debug=True)
+        self.assertEqual(len(server.queue), 0)
+        self.assertEqual(len(env.log["requestProcessed"]), 10)
+
+class RequestTest(unittest.TestCase):
+    def testCancel(self):
+        env = Environment(stopTime=10)
+        req = Request(0, 1, 10, env) #request gets cancelled after 10 seconds
+        env.run(debug=True)
+        print(env.log['requestCancelled'])
+        self.assertTrue(req.isCancelled)
+
+    def testFinishprocessing(self):
+        env = Environment(stopTime=10)
+        server = Server(environment = env)
+        req = Request(0, 1, 10, env) #request gets cancelled after 10 seconds, duration 1 sec
+        req.assignToServer(server)
+        req.startProcessing()
+        env.run(debug=True)
+        print(env.log['requestProcessed'])
+        self.assertFalse(req.isCancelled)
+        self.assertTrue(req.isProcessed)
+
     
 if __name__ == '__main__':
     unittest.main()

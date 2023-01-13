@@ -1,4 +1,4 @@
-from sortedcontainers import SortedDict
+from sortedcontainers import SortedKeyList
 import warnings
 
 from Event import Event
@@ -14,7 +14,7 @@ class Environment:
         """
         self.stopTime = stopTime
         self.currentTime = 0
-        self.eventQueue = SortedDict() 
+        self.eventQueue: SortedKeyList = SortedKeyList(key=lambda e: e.time) 
         self.debug = 0
         self.log = {} #dictionary for storage of arbitary statistics
         self.logTime = {} #store timestamps of logs
@@ -27,7 +27,7 @@ class Environment:
         e : Event
             The event that needs to be scheduled
         """
-        self.eventQueue[e.time] = e
+        self.eventQueue.add(e)
         if self.debug: print(f"{self.currentTime} | Planned event for time {e.time} with name {e.name}")
     
     def _handleEvent(self, e:Event):
@@ -71,7 +71,8 @@ class Environment:
 
         while len(self.eventQueue) > 0:   
             self.debug = debug
-            nextEventTime, nextEvent = self.eventQueue.popitem(index=0)
+            nextEvent = self.eventQueue.pop(index=0)
+            nextEventTime = nextEvent.time
             if nextEventTime > self.stopTime: break
             self._handleEvent(nextEvent)
         if len(self.eventQueue) == 0: warnings.warn("Event queueu is empty before stopTime was reached")

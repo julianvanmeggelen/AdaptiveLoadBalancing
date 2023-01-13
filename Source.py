@@ -1,14 +1,9 @@
 #from LoadBalancer import LoadBalancer TODO: switch to using these classes when implemented
 from Environment import Environment
 from Event import Event 
-#from Request import Request TODO: switch to using these classes when implemented
+from Request import Request
 import random
 
-
-#for testing 
-class Request:
-    def __init__(self, type, processingTime, environment):
-        self.type, self.processingTimes = type, processingTime
 
 class LoadBalancer:
     def __init__(self):
@@ -33,7 +28,7 @@ class Source():
         requestProb: float
             The probability of a request being spawned at each sample moment
         requestTypes: list[tuple]
-            A list containing info on the request types, structured like [(typeProb, typeMean, typeStd),...]
+            A list containing info on the request types, structured like [(typeProb, typeMean, typeStd, timeLimit),...]
             where typeProb is the probability of the type arriving and typeMean and typeVar are the
             parameters used when sampling from the Normal distribution.
         loadBalancer: LoadBalancer
@@ -56,9 +51,9 @@ class Source():
         requestTypeIndices = list(range(0,len(self.requestTypes)))
         requestTypeProbs = [requestType[1] for requestType in self.requestTypes]
         sampledRequestIndice = random.choices(requestTypeIndices, weights = requestTypeProbs)[0]
-        _, typeMean, typeStd = self.requestTypes[sampledRequestIndice]
+        _, typeMean, typeStd, typeTimeLimit = self.requestTypes[sampledRequestIndice]
         requestProcessingTime = random.gauss(mu=typeMean, sigma=typeStd)
-        request = Request(type=sampledRequestIndice, processingTime = requestProcessingTime, environment = self.environment)
+        request = Request(type=sampledRequestIndice, processingTime = requestProcessingTime, timeRequirement=typeTimeLimit, environment = self.environment)
         if self.environment.debug: self.environment.logData("requestType", sampledRequestIndice)
         return request
 
