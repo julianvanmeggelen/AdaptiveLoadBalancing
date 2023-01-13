@@ -1,6 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
-
+from uuid import uuid1
 if TYPE_CHECKING: #only for typechecking
     from Request import Request 
 
@@ -9,20 +9,23 @@ import math
 
 class Queue:
 
-    def __init__(self, length=math.inf):
+    def __init__(self, environment: Environment, length=math.inf, id=0):
         '''
         length: maximum number of requests per server
         '''
+        self.id = id
         self.length = length
         self.size = 0
         self.queue: list[Request] = []
+        self.environment = environment
     
     def push(self, request: Request):
-        if (self.size<self.length):
+        if (self.size<self.length) and not request.isCancelled:
             self.size += 1
             self.queue.append(request)
         else:
             request.cancelRequest()
+        self.logSize(self.size)
 
     def updateQueue(self):
         """
@@ -33,34 +36,47 @@ class Queue:
     
     def pull(self) -> Request:
         """
-        Retreive next request that is not cancelled
+        Retrieve next request that is not cancelled
         """
         self.updateQueue()
         nextRequest = self.queue.pop()
         self.size -= 1
+        self.logSize(self.size)
         return nextRequest
+
+    def logSize(self, size):
+        size = self.__len__() if size is None else size
+        print(size)
+        logKey = f"queueSize_{self.id}"
+        self.environment.logData(logKey, size)
 
     def __len__(self):
         self.updateQueue()
         return self.size
 
 class Server:
-    def __init__(self, environment: Environment):
+    def __init__(self, environment: Environment, id=None):
         '''
         environment: the simulation environment
         '''
-        self.queue: Queue = Queue()
+        self.id = id if id is not None else uuid1()
+        self.queue: Queue = Queue(environment, id=self.id)
         self.environment: Environment = environment
         self.nowServing: Request = None
+        
 
     def assignRequest(self, request: Request):
         """
         LoadBalancer uses this method to assign request to this server
         """
         request.assignToServer(self)
-        self.queue.push(request)
         if self.nowServing is None:
-            self.startServingNext()
+            request.startProcessing()
+            self.nowServing = request
+        else:
+            self.queue.push(request)
+
+
 
     def currentRequestFinished(self):
         """

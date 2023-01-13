@@ -19,7 +19,7 @@ class TestLoadBalancer:
         return
 
 class Source():
-    def __init__(self, samplingInterval: float, requestProb: float, requestTypes: list[tuple], loadBalancer: LoadBalancer, environment: Environment):
+    def __init__(self, samplingInterval: float, requestProb: float, requestTypes, loadBalancer: LoadBalancer, environment: Environment): #requestTypes: list[tuple]
         """
         Parameters
         ----------
@@ -63,7 +63,7 @@ class Source():
         This method is invoked when the sample event is executed and samples whether a request arrives and 
         creates the Request object and sends it to the loadbalancer.
         """
-        invokeArrival = (random.uniform(0,1) > self.requestProb)
+        invokeArrival = (random.uniform(0,1) < self.requestProb)
         if self.environment.debug: self.environment.logData("sampleEvent")
         if invokeArrival: 
             if self.environment.debug: self.environment.logData("arrivalEvent")
