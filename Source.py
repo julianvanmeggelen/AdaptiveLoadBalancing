@@ -54,7 +54,7 @@ class Source():
         _, typeMean, typeStd, typeTimeLimit = self.requestTypes[sampledRequestIndice]
         requestProcessingTime = random.gauss(mu=typeMean, sigma=typeStd)
         request = Request(type=sampledRequestIndice, processingTime = requestProcessingTime, timeRequirement=typeTimeLimit, environment = self.environment)
-        if self.environment.debug: self.environment.logData("requestType", sampledRequestIndice)
+        self.environment.logData("requestType", sampledRequestIndice)
         return request
 
     
@@ -64,9 +64,9 @@ class Source():
         creates the Request object and sends it to the loadbalancer.
         """
         invokeArrival = (random.uniform(0,1) < self.requestProb)
-        if self.environment.debug: self.environment.logData("sampleEvent")
+        self.environment.logData("sampleEvent")
         if invokeArrival: 
-            if self.environment.debug: self.environment.logData("arrivalEvent")
+            self.environment.logData("arrivalEvent")
             request = self._generateRequest()
             self.loadBalancer.handleRequestArrival(request)
 

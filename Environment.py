@@ -14,7 +14,7 @@ class Environment:
         """
         self.stopTime = stopTime
         self.currentTime = 0
-        self.eventQueue: SortedKeyList = SortedKeyList(key=lambda e: e.time) 
+        self.eventQueue: SortedKeyList = SortedKeyList(key=lambda e: e.key) 
         self.debug = 0
         self.log = {} #dictionary for storage of arbitary statistics
         self.logTime = {} #store timestamps of logs

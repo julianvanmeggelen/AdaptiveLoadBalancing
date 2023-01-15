@@ -1,0 +1,1 @@
+![alt text for screen readers](/diagram.png)

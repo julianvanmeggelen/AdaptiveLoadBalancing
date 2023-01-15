@@ -4,6 +4,7 @@ from Environment import Environment
 from Source import Source, TestLoadBalancer 
 from Request import Request
 from Server import Server
+from Server import Queue
 
 class TestValue:
     def __init__(self, val):
@@ -57,7 +58,7 @@ class SourceTest(unittest.TestCase):
         samplingInterval = 0.1
         env = Environment(stopTime=stopTime)
         loadBalancer = TestLoadBalancer()
-        source = Source(samplingInterval, 0.5, [(0.5,1,1,10),(0.5,2,2,10)], loadBalancer, env)
+        source = Source(samplingInterval, 0.5, [(0.5,1,0.1,10),(0.5,2,0.2,10)], loadBalancer, env)
         source.scheduleNextSampleEvent()
         env.run(debug=True)
         nSamples = len(env.log["sampleEvent"])
@@ -69,7 +70,7 @@ class SourceTest(unittest.TestCase):
         env = Environment(stopTime=stopTime)
         loadBalancer = TestLoadBalancer()
         requestProb = 0.5
-        source = Source(samplingInterval, requestProb, [(0.5,1,1,10),(0.5,2,2,10)], loadBalancer, env)
+        source = Source(samplingInterval, requestProb, [(0.5,1,0.1,10),(0.5,2,0.2,10)], loadBalancer, env)
         source.scheduleNextSampleEvent()
         env.run(debug=True)
         nSamples = len(env.log["sampleEvent"])
@@ -79,6 +80,59 @@ class SourceTest(unittest.TestCase):
         self.assertAlmostEqual(nArrival/nSamples, requestProb, delta=0.1) #test sample prob of arrival approximately equal to provided requestProb
 
     #def testRequestTypeSampling(self):
+class QueueTest(unittest.TestCase):
+    def testPushPull(self):
+        env = Environment(stopTime=10)
+        q = Queue(environment=env)
+        correctOrder = []
+        for i in range(10):
+            req = Request(1,1,10,env)
+            q.push(req)
+            correctOrder.append(req.id)
+        pulledOrder  = []
+        for i in range(10):
+            req = q.pull()
+            pulledOrder.append(req.id)
+        self.assertListEqual(pulledOrder, correctOrder)
+    
+    def testSize(self):
+        env = Environment(stopTime=10)
+        q = Queue(environment=env)
+        req = Request(1,1,10,env)
+        idToRemove = req.id
+        q.push(req)
+        req = Request(1,1,10,env)
+        q.push(req)
+        q.remove(idToRemove)
+        self.assertEqual(q.size, 1)
+        self.assertNotEqual(q.pull().id, idToRemove)
+
+    def testSize2(self):
+        env = Environment(stopTime=10)
+        q = Queue(environment=env)
+        req = Request(1,1,10,env)
+        allIds = []
+        for i in range(10):
+            req = Request(1,1,10,env)
+            q.push(req)
+            allIds.append(req.id)
+        for i in range(5):
+            q.remove(allIds[i])
+        self.assertEqual(q.size, 5)
+
+    def testPull(self):
+        env = Environment(stopTime=10)
+        q = Queue(environment=env)
+        allIds = []
+        for i in range(10):
+            req = Request(1,1,10,env)
+            q.push(req)
+            allIds.append(req.id)
+        for i in range(10):
+            q.remove(allIds[i])
+            print(q.size)
+        
+        self.assertRaises(IndexError, q.pull)
 
 class ServerTest(unittest.TestCase):
     def testServer(self):
@@ -86,8 +140,7 @@ class ServerTest(unittest.TestCase):
         server = Server(environment = env)
 
         for i in range(10): #assign 10 requests to the server, should be all finished within the time limit
-            req = Request(0, 1, 10, env)
-            env.scheduleEvent(Event(0, lambda: server.assignRequest(req)))
+            env.scheduleEvent(Event(0, lambda: server.assignRequest(Request(0, 1, 10, env)), "assignToServer"))
             print(len(env.eventQueue))
         
         print(len(env.eventQueue))
@@ -97,6 +150,7 @@ class ServerTest(unittest.TestCase):
 
 class RequestTest(unittest.TestCase):
     def testCancel(self):
+        env = Environment(stopTime=10)
         env = Environment(stopTime=10)
         req = Request(0, 1, 10, env) #request gets cancelled after 10 seconds
         env.run(debug=True)

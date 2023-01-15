@@ -1,6 +1,8 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 from uuid import uuid1
+from collections import OrderedDict
+
 if TYPE_CHECKING: #only for typechecking
     from Request import Request 
 
@@ -16,42 +18,43 @@ class Queue:
         self.id = id
         self.length = length
         self.size = 0
-        self.queue: list[Request] = []
+        self.queue: OrderedDict = OrderedDict()
         self.environment = environment
     
+    def remove(self, id: str):
+        if id in self.queue.keys():
+            self.size-=1
+            self.queue.pop(id)
+        else:
+            return ValueError(f"Key {id} not in queue")
+
     def push(self, request: Request):
-        if (self.size<self.length) and not request.isCancelled:
+        if request.isCancelled: return
+        if (self.size<self.length):
             self.size += 1
-            self.queue.append(request)
+            self.queue[request.id] = request
         else:
             request.cancelRequest()
         self.logSize(self.size)
-
-    def updateQueue(self):
-        """
-        Remove cancelled requests from queue
-        """
-        self.queue = [req for req in self.queue if not req.isCancelled]
-        self.size = len(self.queue)
     
     def pull(self) -> Request:
         """
-        Retrieve next request that is not cancelled
+        Retrieve next request
         """
-        self.updateQueue()
-        nextRequest = self.queue.pop()
+        if self.size == 0:
+            raise IndexError("Queue is empty, nothing to pull")
+
+        _, nextRequest = self.queue.popitem(last=False)
         self.size -= 1
         self.logSize(self.size)
         return nextRequest
 
     def logSize(self, size):
         size = self.__len__() if size is None else size
-        print(size)
         logKey = f"queueSize_{self.id}"
         self.environment.logData(logKey, size)
 
     def __len__(self):
-        self.updateQueue()
         return self.size
 
 class Server:
@@ -76,7 +79,13 @@ class Server:
         else:
             self.queue.push(request)
 
-
+    def cancelRequest(self, request: Request):
+        """
+        removes the request from the queue
+        """
+        self.queue.remove(request.id)
+        if self.nowServing is not None and self.nowServing.id == request.id:
+            self.currentRequestFinished()
 
     def currentRequestFinished(self):
         """

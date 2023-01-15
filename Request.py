@@ -1,5 +1,6 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from uuid import uuid4
 
 if TYPE_CHECKING: #only for typechecking
     from Server import Server 
@@ -21,6 +22,7 @@ class Request:
         self.isBeingProcessed = False
         self.isProcessed = False
         self.isCancelled = False
+        self.id = uuid4()
 
         self.waitingStartTime = None
         self.processingStartTime = None
@@ -30,6 +32,9 @@ class Request:
 
         self.assignedServer = None
 
+        if self.processingTime < 0:
+            raise ValueError("Request was provided a negative processingtime")
+
         self.startWaiting() #request starts waiting when created
 
     def assignToServer(self, server: Server):
@@ -38,10 +43,9 @@ class Request:
     def cancelRequest(self):
         if self.isProcessed or self.isCancelled:
             return #if processed the request cannot be cancelled anymore
-        if self.isBeingProcessed:
-            self.assignedServer.currentRequestFinished()
-        else:
-            self.isCancelled = True
+        if self.assignedServer is not None:    
+            self.assignedServer.cancelRequest(self)
+        self.isCancelled = True
         self.environment.logData("requestCancelled")
         
     def startWaiting(self):
@@ -68,7 +72,7 @@ class Request:
         self.endWaiting()
         self.isBeingProcessed = True
         requestProcessingEndTime = self.environment.currentTime + self.processingTime
-        self.environment.scheduleEvent(Event(requestProcessingEndTime, self.finishProcessing, 'requestFinishProcessing'))
+        self.environment.scheduleEvent(Event(requestProcessingEndTime, self.finishProcessing, 'requestFinishProcessing', prio=2))
 
     def finishProcessing(self):
         self.assignedServer.currentRequestFinished()

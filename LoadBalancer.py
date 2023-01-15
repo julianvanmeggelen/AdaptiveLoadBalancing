@@ -24,6 +24,9 @@ class LoadBalancer:
         self.serverList[self.currentServer].assignRequest(request=request)
         self.currentServer += 1
         if self.currentServer >= self.nServers: self.currentServer = 0
+
+        nQueue = sum([server.queue.size for server in self.serverList])
+        self.environment.logData("totalInQueue", nQueue)
     
     def onPeriodEnd(self):
         """
