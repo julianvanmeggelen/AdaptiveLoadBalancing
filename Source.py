@@ -1,15 +1,12 @@
-#from LoadBalancer import LoadBalancer TODO: switch to using these classes when implemented
+from __future__ import annotations
+from typing import TYPE_CHECKING
+if TYPE_CHECKING: #only for typechecking
+    from LoadBalancer import LoadBalancer 
+
 from Environment import Environment
 from Event import Event 
 from Request import Request
 import random
-
-
-class LoadBalancer:
-    def __init__(self):
-        return
-    def handleRequestArrival(self, req):
-        return
         
 class TestLoadBalancer:
     def __init__(self):
