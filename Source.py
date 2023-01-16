@@ -15,6 +15,25 @@ class TestLoadBalancer:
     def handleRequestArrival(self, req):
         return
 
+class EventClock:
+    def __init__(self, interval, method, environment):
+        """
+        Execute a method every 'interval' time units
+        """
+        self.interval = interval
+        self.method = method
+        self.environment = environment
+        self._scheduleNext() #initialize
+    
+    def _onEventCall(self):
+        self.method()
+        self._scheduleNext()  
+    
+    def _scheduleNext(self):
+        nextTime = self.environment.currentTime + self.interval
+        nextEvent = Event(nextTime, self._onEventCall, "EventClock")
+        self.environment.scheduleEvent(nextEvent)   
+
 class Source():
     def __init__(self, samplingInterval: float, requestProb: float, requestTypes, loadBalancer: LoadBalancer, environment: Environment): #requestTypes: list[tuple]
         """
@@ -38,8 +57,11 @@ class Source():
         self.requestTypes = requestTypes
         self.loadBalancer = loadBalancer
         self.environment = environment
+        self.clock = EventClock(interval = samplingInterval, method=self._onSampleEvent, environment=environment)
         assert sum([requestType[0] for requestType in self.requestTypes]) == 1.0, "typeProbs of provides requestTypes must sum to 1"
 
+    def setRequestProb(self, prob):
+        self.requestProb = prob
 
     def _generateRequest(self):
         """
@@ -67,18 +89,29 @@ class Source():
             request = self._generateRequest()
             self.loadBalancer.handleRequestArrival(request)
 
-        self.scheduleNextSampleEvent()
-
-
-    def scheduleNextSampleEvent(self):
-        """
-        Schedule the next sampling event in the environment. This method can be used to initialize the
-        environment with it's first event.
-        """
-        nextEventTime = self.environment.currentTime + self.samplingInterval
-        nextEvent = Event(nextEventTime, self._onSampleEvent, "Arrival sampling event")
-        self.environment.scheduleEvent(nextEvent)
-
+class ArrivalSchedule:
+    """
+    Sets the arrival prob. for every period with length periodLength and notififies the loadBalancer that a new period has started.
+    Can be easily extended to emulate any arrival process. Possibly depending on historic simulation data.
+    """
+    def __init__(self, periodLength, arrivalSchedule: list, environment, source, loadBalancer):
+        self.periodIndex = 0
+        self.arrivalSchedule = arrivalSchedule
+        self.source = source
+        self.loadBalancer = loadBalancer
+        self.clock = EventClock(periodLength, self.nextPeriod, environment)
+        self.currentPeriodIndex = 0
+        self.nPeriods = len(arrivalSchedule)
+        self.source.setRequestProb(arrivalSchedule[0])
+    
+    def nextPeriod(self):
+        nextPeriodIndex = self.currentPeriodIndex + 1
+        if nextPeriodIndex == self.nPeriods: #if at the end of the schedule go back to 0
+            nextPeriodIndex = 0
+        self.currentPeriodIndex = nextPeriodIndex
+        nextPeriodRequestProb = self.arrivalSchedule[nextPeriodIndex]
+        self.source.setRequestProb(nextPeriodRequestProb)
+        self.loadBalancer.onPeriodEnd()
 
 
 

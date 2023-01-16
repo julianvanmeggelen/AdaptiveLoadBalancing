@@ -56,6 +56,7 @@ class Request:
         self.isWaiting = True
         requestCancelTime = self.environment.currentTime + self.timeRequirement
         requestCancelledEvent = Event(requestCancelTime, self.cancelRequest, "cancelRequest")
+        self.environment.logData("requestStartWaiting")
         self.environment.scheduleEvent(requestCancelledEvent)
     
     def endWaiting(self):

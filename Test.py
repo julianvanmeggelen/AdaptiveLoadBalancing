@@ -1,7 +1,7 @@
 import unittest
 from Event import Event
 from Environment import Environment
-from Source import Source, TestLoadBalancer 
+from Source import Source, TestLoadBalancer, EventClock
 from Request import Request
 from Server import Server
 from Server import Queue
@@ -52,14 +52,27 @@ class  EnvironmentTest(unittest.TestCase):
         self.assertListEqual(env.log["test"], [1,2]) #test correct order
         self.assertListEqual(env.logTime["test"], [2,3]) #test correct timestamps
 
+class EventClockTest(unittest.TestCase):
+    def testEventClock(self):
+        def add(a,b):
+            return a + b
+            
+        env = Environment(stopTime=10)
+        env.debug=True
+        count = TestValue(val=0)
+        clock = EventClock(1,lambda: count.add(1) , environment=env)
+        env.run()
+        self.assertEqual(count.val, 10)
+
+
 class SourceTest(unittest.TestCase):
     def testEventScheduling(self):
         stopTime = 10
         samplingInterval = 0.1
         env = Environment(stopTime=stopTime)
+        env.debug=True
         loadBalancer = TestLoadBalancer()
         source = Source(samplingInterval, 0.5, [(0.5,1,0.1,10),(0.5,2,0.2,10)], loadBalancer, env)
-        source.scheduleNextSampleEvent()
         env.run(debug=True)
         nSamples = len(env.log["sampleEvent"])
         self.assertEqual(nSamples, stopTime/samplingInterval) #number of sample events should be stopTime/samplingInterval
@@ -71,7 +84,6 @@ class SourceTest(unittest.TestCase):
         loadBalancer = TestLoadBalancer()
         requestProb = 0.5
         source = Source(samplingInterval, requestProb, [(0.5,1,0.1,10),(0.5,2,0.2,10)], loadBalancer, env)
-        source.scheduleNextSampleEvent()
         env.run(debug=True)
         nSamples = len(env.log["sampleEvent"])
         nArrival = len(env.log["arrivalEvent"])

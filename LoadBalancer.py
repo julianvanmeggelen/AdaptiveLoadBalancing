@@ -32,6 +32,7 @@ class LoadBalancer:
         """
         This method will be called on the end of each period, this is the place where the next period number of servers is determined
         """
-        raise NotImplementedError
+        return
+        #raise NotImplementedError
 
     
