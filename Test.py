@@ -72,24 +72,23 @@ class SourceTest(unittest.TestCase):
         env = Environment(stopTime=stopTime)
         env.debug=True
         loadBalancer = TestLoadBalancer()
-        source = Source(samplingInterval, 0.5, [(0.5,1,0.1,10),(0.5,2,0.2,10)], loadBalancer, env)
+        source = Source(10, [(0.5,1,0.1,10),(0.5,2,0.2,10)], loadBalancer, env, samplingInterval=0.1)
         env.run(debug=True)
         nSamples = len(env.log["sampleEvent"])
         self.assertEqual(nSamples, stopTime/samplingInterval) #number of sample events should be stopTime/samplingInterval
 
     def testArrivalSampling(self):
         stopTime = 10
-        samplingInterval = 0.1
         env = Environment(stopTime=stopTime)
         loadBalancer = TestLoadBalancer()
-        requestProb = 0.5
-        source = Source(samplingInterval, requestProb, [(0.5,1,0.1,10),(0.5,2,0.2,10)], loadBalancer, env)
+        arrivalsPerSecond = 10
+        source = Source(arrivalsPerSecond, [(0.5,1,0.1,10),(0.5,2,0.2,10)], loadBalancer, env)
         env.run(debug=True)
         nSamples = len(env.log["sampleEvent"])
         nArrival = len(env.log["arrivalEvent"])
         print(nSamples, nArrival)
         print(nArrival/nSamples)
-        self.assertAlmostEqual(nArrival/nSamples, requestProb, delta=0.1) #test sample prob of arrival approximately equal to provided requestProb
+        self.assertAlmostEqual(arrivalsPerSecond * stopTime, nArrival, delta=15) #test sample prob of arrival approximately equal to provided requestProb
 
     #def testRequestTypeSampling(self):
 class QueueTest(unittest.TestCase):

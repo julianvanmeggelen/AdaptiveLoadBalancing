@@ -7,7 +7,8 @@ from Environment import Environment
 from Event import Event 
 from Request import Request
 import random
-        
+DEFAULT_SAMPLING_INTERVAL = 0.05
+
 class TestLoadBalancer:
     def __init__(self):
         return
@@ -35,14 +36,12 @@ class EventClock:
         self.environment.scheduleEvent(nextEvent)   
 
 class Source():
-    def __init__(self, samplingInterval: float, requestProb: float, requestTypes, loadBalancer: LoadBalancer, environment: Environment): #requestTypes: list[tuple]
+    def __init__(self, arrivalsPerSecond: float, requestTypes, loadBalancer: LoadBalancer, environment: Environment, samplingInterval = DEFAULT_SAMPLING_INTERVAL): #requestTypes: list[tuple]
         """
         Parameters
         ----------
-        samplingInterval: float
-            The interval between each sample moment
-        requestProb: float
-            The probability of a request being spawned at each sample moment
+        arrivalsPerSecond: float:
+            number of arrivals per second (on average)
         requestTypes: list[tuple]
             A list containing info on the request types, structured like [(typeProb, typeMean, typeStd, timeLimit),...]
             where typeProb is the probability of the type arriving and typeMean and typeVar are the
@@ -52,12 +51,13 @@ class Source():
         environment: Environment
             The Environment instance that this source is connected to.
         """
+        self.arrivalsPerSecond = arrivalsPerSecond
         self.samplingInterval = samplingInterval
-        self.requestProb = requestProb
+        self.requestProb = self.samplingInterval * arrivalsPerSecond
         self.requestTypes = requestTypes
         self.loadBalancer = loadBalancer
         self.environment = environment
-        self.clock = EventClock(interval = samplingInterval, method=self._onSampleEvent, environment=environment)
+        self.clock = EventClock(interval = self.samplingInterval, method=self._onSampleEvent, environment=environment)
         assert sum([requestType[0] for requestType in self.requestTypes]) == 1.0, "typeProbs of provides requestTypes must sum to 1"
 
     def setRequestProb(self, prob):
