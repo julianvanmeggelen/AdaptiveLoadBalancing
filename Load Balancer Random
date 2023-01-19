@@ -1,0 +1,2 @@
+import random
+#self.currentServer = random.randint(0,nServers)
