@@ -16,18 +16,15 @@ class LoadBalancer:
         self.nServers = nServers 
         self.environment = environment
         self.serverList = [Server(environment=environment, id=i) for i in range(nServers)]
-        #self.currentServer = 0
-        #self.currentServer = random.randint(0,nServers)
+        self.currentServer = random.randint(0,nServers)
     
     def handleRequestArrival(self, request: Request):
         """
         Round robin assignment
         """
         self.serverList[self.currentServer].assignRequest(request=request)
-        #self.currentServer += 1
         self.currentServer = random.randint(0,nServers)
-        #if self.currentServer >= self.nServers: self.currentServer = 0
-
+        
         nQueue = sum([server.queue.size for server in self.serverList])
         self.environment.logData("totalInQueue", nQueue)
     
