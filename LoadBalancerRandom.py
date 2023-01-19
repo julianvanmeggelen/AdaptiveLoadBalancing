@@ -10,7 +10,7 @@ from Server import Server
 
 class LoadBalancer:
     """
-    Default loadbalancer using the Round-Robin assignment algorithm
+    Loadbalancer assigning to servers random
     """
     def __init__(self, nServers, environment: Environment):
         self.nServers = nServers 
