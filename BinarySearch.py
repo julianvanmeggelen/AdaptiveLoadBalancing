@@ -1,6 +1,8 @@
 from Environment import Environment
 from LoadBalancer import LoadBalancer
 from Source import Source, ArrivalSchedule
+import math
+import numpy as np
 
 def costCalculate(stopTime, nServers, arrivalsPerSecond, requestTypes, processCost = 1, cancelCost = -10, serverCost = -300):
     env = Environment(stopTime=stopTime)
@@ -17,22 +19,18 @@ def binaryServerSearch(arrivalRate=0.5, searchSpace=[10,40], processCost = 1, ca
     left = searchSpace[0]
     right = searchSpace[1]
     dif = right-left
-    profit = [None]*(right-left)
     while (dif>2):
         mid = (left+right)/2
-        left_temp = round((left+mid)/2)
-        right_temp = round((right+mid)/2)
-        for n in [left_temp,right_temp]:
-            profit[n-searchSpace[0]] = costCalculate(stopTime=stopTime,nServers=n,arrivalsPerSecond=arrivalsPerSecond,requestTypes=requestTypes, processCost=processCost,cancelCost=cancelCost,serverCost=serverCost)
-        if (profit[left_temp-searchSpace[0]]>profit[right_temp-searchSpace[0]]):
-            right = round(mid)
+        left_temp = math.floor(mid)
+        right_temp = left_temp+1
+        cost_left = costCalculate(stopTime=stopTime,nServers=left_temp,arrivalsPerSecond=arrivalsPerSecond,requestTypes=requestTypes)
+        cost_right = costCalculate(stopTime=stopTime,nServers=right_temp,arrivalsPerSecond=arrivalsPerSecond,requestTypes=requestTypes)
+        if (cost_left>cost_right):
+            right = right_temp
         else:
-            left = round(mid)
+            left = left_temp
         dif = right-left
-    n_star = left
-    for n in range(left,right+1):
-        if (profit[n-searchSpace[0]]==None):
-            profit[n-searchSpace[0]] = costCalculate(stopTime=stopTime,nServers=n,arrivalsPerSecond=arrivalsPerSecond,requestTypes=requestTypes,  processCost=processCost,cancelCost=cancelCost,serverCost=serverCost)
-        if (profit[n-searchSpace[0]]>profit[n_star-searchSpace[0]]):
-            n_star = n
+    cost_middle = costCalculate(stopTime=stopTime,nServers=left+1,arrivalsPerSecond=arrivalsPerSecond,requestTypes=requestTypes)
+    cost_list = [cost_left,cost_middle,cost_right]
+    n_star = left+int(np.where(cost_list==np.max(cost_list))[0])
     return n_star
