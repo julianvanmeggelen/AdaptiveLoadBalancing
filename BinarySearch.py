@@ -13,8 +13,7 @@ def costCalculate(stopTime, nServers, arrivalsPerSecond, requestTypes, processCo
     cost = len(env.log['requestProcessed']) * processCost + nCancelled * cancelCost + stopTime/60/60*nServers*serverCost
     return cost
 
-def binaryServerSearch(arrivalRate=0.5, searchSpace=[10,40], processCost = 1, cancelCost = -10, serverCost = -300, requestTypes = [(0.5,1,0.1,10), (0.5,2,0.2,10)], simDuration=3*60*60):
-    arrivalsPerSecond = 20*arrivalRate #Default sampling interval=0.05
+def binaryServerSearch(arrivalsPerSecond, searchSpace=[10,40], processCost = 1, cancelCost = -10, serverCost = -300, requestTypes = [(0.5,1,0.1,10), (0.5,2,0.2,10)], simDuration=3*60*60):
     stopTime = simDuration
     left = searchSpace[0]
     right = searchSpace[1]
@@ -23,8 +22,8 @@ def binaryServerSearch(arrivalRate=0.5, searchSpace=[10,40], processCost = 1, ca
         mid = (left+right)/2
         left_temp = math.floor(mid)
         right_temp = left_temp+1
-        cost_left = costCalculate(stopTime=stopTime,nServers=left_temp,arrivalsPerSecond=arrivalsPerSecond,requestTypes=requestTypes)
-        cost_right = costCalculate(stopTime=stopTime,nServers=right_temp,arrivalsPerSecond=arrivalsPerSecond,requestTypes=requestTypes)
+        cost_left = costCalculate(stopTime=stopTime,nServers=left_temp,arrivalsPerSecond=arrivalsPerSecond,requestTypes=requestTypes, processCost=processCost,cancelCost=cancelCost,serverCost=serverCost)
+        cost_right = costCalculate(stopTime=stopTime,nServers=right_temp,arrivalsPerSecond=arrivalsPerSecond,requestTypes=requestTypes, processCost=processCost,cancelCost=cancelCost,serverCost=serverCost)
         if (cost_left>cost_right):
             right = right_temp
         else:
@@ -32,5 +31,6 @@ def binaryServerSearch(arrivalRate=0.5, searchSpace=[10,40], processCost = 1, ca
         dif = right-left
     cost_middle = costCalculate(stopTime=stopTime,nServers=left+1,arrivalsPerSecond=arrivalsPerSecond,requestTypes=requestTypes)
     cost_list = [cost_left,cost_middle,cost_right]
-    n_star = left+int(np.where(cost_list==np.max(cost_list))[0])
+    n_star = left+int(np.where(cost_list==np.max(cost_list))[0][0])
     return n_star
+

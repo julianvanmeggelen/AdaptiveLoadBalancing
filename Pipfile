@@ -7,6 +7,7 @@ name = "pypi"
 sortedcontainers = "*"
 numpy = "*"
 tqdm = "*"
+pandas = "*"
 
 [dev-packages]
 

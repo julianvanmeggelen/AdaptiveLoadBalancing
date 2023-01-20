@@ -7,7 +7,7 @@ from Environment import Environment
 from Event import Event 
 from Request import Request
 import random
-DEFAULT_SAMPLING_INTERVAL = 0.05
+DEFAULT_REQUEST_PROB = 0.5
 
 class TestLoadBalancer:
     def __init__(self):
@@ -36,7 +36,7 @@ class EventClock:
         self.environment.scheduleEvent(nextEvent)   
 
 class Source():
-    def __init__(self, arrivalsPerSecond: float, requestTypes, loadBalancer: LoadBalancer, environment: Environment, samplingInterval = DEFAULT_SAMPLING_INTERVAL): #requestTypes: list[tuple]
+    def __init__(self, arrivalsPerSecond: float, requestTypes, loadBalancer: LoadBalancer, environment: Environment, requestProb = DEFAULT_REQUEST_PROB): #requestTypes: list[tuple]
         """
         Parameters
         ----------
@@ -52,25 +52,28 @@ class Source():
             The Environment instance that this source is connected to.
         """
         self.arrivalsPerSecond = arrivalsPerSecond
-        self.samplingInterval = samplingInterval
-        self.requestProb = self.samplingInterval * arrivalsPerSecond
+        self.requestProb = requestProb
+        self.samplingInterval = self.requestProb/arrivalsPerSecond
+        assert self.requestProb <= 1.0, "Requestprob > 1"
         self.requestTypes = requestTypes
         self.loadBalancer = loadBalancer
         self.environment = environment
         self.clock = EventClock(interval = self.samplingInterval, method=self._onSampleEvent, environment=environment)
+        self.requestTypeProbs = [requestType[1] for requestType in self.requestTypes]
+        self.requestTypeIndices = list(range(0,len(self.requestTypes)))
+
+
         assert sum([requestType[0] for requestType in self.requestTypes]) == 1.0, "typeProbs of provides requestTypes must sum to 1"
 
     def setArrivalsPerSecond(self, arrivalsPerSecond):
         self.arrivalsPerSecond = arrivalsPerSecond
-        self.requestProb = self.samplingInterval * arrivalsPerSecond
+        self.samplingInterval = self.requestProb/arrivalsPerSecond
 
     def _generateRequest(self):
         """
         Sample the request type from the provided request types and create the Request object.
         """
-        requestTypeIndices = list(range(0,len(self.requestTypes)))
-        requestTypeProbs = [requestType[1] for requestType in self.requestTypes]
-        sampledRequestIndice = random.choices(requestTypeIndices, weights = requestTypeProbs)[0]
+        sampledRequestIndice = random.choices(self.requestTypeIndices, weights = self.requestTypeProbs)[0]
         _, typeMean, typeStd, typeTimeLimit = self.requestTypes[sampledRequestIndice]
         requestProcessingTime = random.gauss(mu=typeMean, sigma=typeStd)
         request = Request(type=sampledRequestIndice, processingTime = requestProcessingTime, timeRequirement=typeTimeLimit, environment = self.environment)
