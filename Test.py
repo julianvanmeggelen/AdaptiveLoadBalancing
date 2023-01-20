@@ -67,12 +67,15 @@ class EventClockTest(unittest.TestCase):
 
 class SourceTest(unittest.TestCase):
     def testEventScheduling(self):
+        from Source import DEFAULT_REQUEST_PROB
         stopTime = 10
+        arrivalsPerSecond = 10
         samplingInterval = 0.1
+        arrivalsPerSecond = DEFAULT_REQUEST_PROB / samplingInterval
         env = Environment(stopTime=stopTime)
         env.debug=True
         loadBalancer = TestLoadBalancer()
-        source = Source(10, [(0.5,1,0.1,10),(0.5,2,0.2,10)], loadBalancer, env, samplingInterval=0.1)
+        source = Source(arrivalsPerSecond, [(0.5,1,0.1,10),(0.5,2,0.2,10)], loadBalancer, env)
         env.run(debug=True)
         nSamples = len(env.log["sampleEvent"])
         self.assertEqual(nSamples, stopTime/samplingInterval) #number of sample events should be stopTime/samplingInterval
