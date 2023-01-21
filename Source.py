@@ -68,6 +68,7 @@ class Source():
     def setArrivalsPerSecond(self, arrivalsPerSecond):
         self.arrivalsPerSecond = arrivalsPerSecond
         self.samplingInterval = self.requestProb/arrivalsPerSecond
+        self.clock.interval = self.samplingInterval
 
     def _generateRequest(self):
         """
