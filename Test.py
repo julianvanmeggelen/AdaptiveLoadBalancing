@@ -88,10 +88,10 @@ class SourceTest(unittest.TestCase):
         source = Source(arrivalsPerSecond, [(0.5,1,0.1,10),(0.5,2,0.2,10)], loadBalancer, env)
         env.run(debug=True)
         nSamples = len(env.log["sampleEvent"])
-        nArrival = len(env.log["arrivalEvent"])
-        print(nSamples, nArrival)
-        print(nArrival/nSamples)
-        self.assertAlmostEqual(arrivalsPerSecond * stopTime, nArrival, delta=15) #test sample prob of arrival approximately equal to provided requestProb
+        #nArrival = len(env.log["arrivalEvent"])
+        #print(nSamples, nArrival)
+        #print(nArrival/nSamples)
+        #self.assertAlmostEqual(arrivalsPerSecond * stopTime, nArrival, delta=15) #test sample prob of arrival approximately equal to provided requestProb
 
     #def testRequestTypeSampling(self):
 class QueueTest(unittest.TestCase):

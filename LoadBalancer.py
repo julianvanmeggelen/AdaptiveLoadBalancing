@@ -21,6 +21,7 @@ class LoadBalancer:
         """
         Round robin assignment
         """
+        self.environment.logData("arrivalEvent")
         if self.currentServer >= self.nServers: self.currentServer = 0
         self.serverList[self.currentServer].assignRequest(request=request)
         self.currentServer += 1

@@ -7,6 +7,9 @@ from Environment import Environment
 from Event import Event 
 from Request import Request
 import random
+        
+import numpy as np
+
 DEFAULT_REQUEST_PROB = 0.5
 
 class TestLoadBalancer:
@@ -34,7 +37,7 @@ class EventClock:
         nextTime = self.environment.currentTime + self.interval
         nextEvent = Event(nextTime, self._onEventCall, "EventClock")
         self.environment.scheduleEvent(nextEvent)   
-
+    
 class Source():
     def __init__(self, arrivalsPerSecond: float, requestTypes, loadBalancer: LoadBalancer, environment: Environment, requestProb = DEFAULT_REQUEST_PROB): #requestTypes: list[tuple]
         """
@@ -51,16 +54,17 @@ class Source():
         environment: Environment
             The Environment instance that this source is connected to.
         """
-        self.arrivalsPerSecond = arrivalsPerSecond
         self.requestProb = requestProb
-        self.samplingInterval = self.requestProb/arrivalsPerSecond
         assert self.requestProb <= 1.0, "Requestprob > 1"
         self.requestTypes = requestTypes
         self.loadBalancer = loadBalancer
         self.environment = environment
+        self.samplingInterval = self.requestProb/arrivalsPerSecond
         self.clock = EventClock(interval = self.samplingInterval, method=self._onSampleEvent, environment=environment)
+        self.setArrivalsPerSecond(arrivalsPerSecond=arrivalsPerSecond)
         self.requestTypeProbs = [requestType[1] for requestType in self.requestTypes]
         self.requestTypeIndices = list(range(0,len(self.requestTypes)))
+
 
 
         assert sum([requestType[0] for requestType in self.requestTypes]) == 1.0, "typeProbs of provides requestTypes must sum to 1"
@@ -78,7 +82,7 @@ class Source():
         _, typeMean, typeStd, typeTimeLimit = self.requestTypes[sampledRequestIndice]
         requestProcessingTime = random.gauss(mu=typeMean, sigma=typeStd)
         request = Request(type=sampledRequestIndice, processingTime = requestProcessingTime, timeRequirement=typeTimeLimit, environment = self.environment)
-        self.environment.logData("requestType", sampledRequestIndice)
+        #self.environment.logData("requestType", sampledRequestIndice)
         return request
 
     
@@ -88,11 +92,54 @@ class Source():
         creates the Request object and sends it to the loadbalancer.
         """
         invokeArrival = (random.uniform(0,1) < self.requestProb)
-        self.environment.logData("sampleEvent")
+        if self.environment.debug: self.environment.logData("sampleEvent")
         if invokeArrival: 
-            self.environment.logData("arrivalEvent")
             request = self._generateRequest()
             self.loadBalancer.handleRequestArrival(request)
+
+class BatchedSource():
+    """
+    Generate all requests for a period in a vectorized way
+    """
+    def __init__(self, arrivalsPerSecond: float, requestTypes, loadBalancer: LoadBalancer, environment: Environment, periodLength: float, requestProb = DEFAULT_REQUEST_PROB):
+        self.requestProb = requestProb
+        assert self.requestProb <= 1.0, "Requestprob > 1"
+        self.requestTypes = requestTypes
+        self.loadBalancer = loadBalancer
+        self.environment = environment
+        self.periodLength = periodLength
+        self.clock = EventClock(interval = self.periodLength, method=self._onSampleEvent, environment=environment)
+        self.requestTypeProbs = [requestType[1] for requestType in self.requestTypes]
+        self.requestTypeIndices = list(range(0,len(self.requestTypes)))
+        self.setArrivalsPerSecond(arrivalsPerSecond=arrivalsPerSecond)
+
+
+        assert len(requestTypes) == 2, "This source only works with two requesttypes"
+        assert sum([requestType[0] for requestType in self.requestTypes]) == 1.0, "typeProbs of provides requestTypes must sum to 1"
+
+    def setArrivalsPerSecond(self, arrivalsPerSecond):
+        self.arrivalsPerSecond = arrivalsPerSecond
+        self.samplingInterval = self.requestProb/arrivalsPerSecond
+        self.nSamplesPerPeriod = round(self.periodLength/self.samplingInterval)
+
+
+    def _generateRequests(self, requestTypeIndex, requestTimes):
+        _, typeMean, typeStd, typeTimeLimit = self.requestTypes[requestTypeIndex]
+        requestProcessingTimes = np.random.normal(typeMean, typeStd, len(requestTimes))
+        for t, requestProcessingTime in zip(requestTimes,requestProcessingTimes) :
+            e = Event(t, lambda: self.loadBalancer.handleRequestArrival(Request(type=requestTypeIndex, processingTime = requestProcessingTime, timeRequirement=typeTimeLimit, environment = self.environment)))
+            self.environment.scheduleEvent(e)
+
+    def _onSampleEvent(self):
+        samplingTimes = self.environment.currentTime + np.arange(0,self.periodLength, self.samplingInterval)
+        samples = np.random.rand(self.nSamplesPerPeriod)
+        requestTimes = samplingTimes[samples < self.requestProb]
+        typeOneProb = self.requestTypeProbs[0]
+        requestTypes = (np.random.rand(len(requestTimes)) < typeOneProb).astype(int)
+        requestTypeOneTimes = requestTimes[requestTypes == 0]
+        self._generateRequests(0, requestTypeOneTimes)
+        requestTypeTwoTimes = requestTimes[requestTypes == 1] 
+        self._generateRequests(1, requestTypeTwoTimes)
 
 class ArrivalSchedule:
     """
