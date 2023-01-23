@@ -1,9 +1,9 @@
 """
 cProfile progam analysis
 """
-from Environment import Environment
-from LoadBalancer import LoadBalancer
-from Source import Source, ArrivalSchedule, BatchedSource, ExponentialSource
+from sim.Environment import Environment
+from sim.LoadBalancer import LoadBalancer
+from sim.Source import Source, ArrivalSchedule, BatchedSource, ExponentialSource
 import cProfile
 from datetime import datetime
 import argparse
