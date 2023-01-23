@@ -3,7 +3,7 @@ cProfile progam analysis
 """
 from Environment import Environment
 from LoadBalancer import LoadBalancer
-from Source import Source, ArrivalSchedule, BatchedSource
+from Source import Source, ArrivalSchedule, BatchedSource, ExponentialSource
 import cProfile
 from datetime import datetime
 import argparse
