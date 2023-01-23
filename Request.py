@@ -10,7 +10,7 @@ from Event import Event
 
 class Request:
 
-    def __init__(self, type, processingTime, timeRequirement, environment: Environment):
+    def __init__(self, type, processingTime, timeRequirement, environment: Environment, id=None):
         '''
         type: type of the request
         processingTime: the processing time of the request, sampled from Gaussian distribution
@@ -22,7 +22,7 @@ class Request:
         self.isBeingProcessed = False
         self.isProcessed = False
         self.isCancelled = False
-        self.id = uuid4()
+        self.id = uuid4() if id is None else id
 
         self.waitingStartTime = None
         self.processingStartTime = None

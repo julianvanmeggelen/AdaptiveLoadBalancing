@@ -20,6 +20,10 @@ class Queue:
         self.size = 0
         self.queue: OrderedDict = OrderedDict()
         self.environment = environment
+
+        if 'totalInQueue' not in self.environment.log.keys():
+            self.environment.logData("totalInQueue", 0)
+
     
     def remove(self, id: str):
         if id in self.queue.keys():
@@ -27,12 +31,18 @@ class Queue:
             self.queue.pop(id)
         else:
             return ValueError(f"Key {id} not in queue")
+        
+        currentTotalInQueue = self.environment.log["totalInQueue"][-1]
+        self.environment.logData('totalInQueue', currentTotalInQueue-1)
 
     def push(self, request: Request):
         if request.isCancelled: return
         if (self.size<self.length):
             self.size += 1
             self.queue[request.id] = request
+
+            currentTotalInQueue = self.environment.log["totalInQueue"][-1]
+            self.environment.logData('totalInQueue', currentTotalInQueue+1)
         else:
             request.cancelRequest()
         self.logSize(self.size)
@@ -47,6 +57,9 @@ class Queue:
         _, nextRequest = self.queue.popitem(last=False)
         self.size -= 1
         self.logSize(self.size)
+
+        currentTotalInQueue = self.environment.log["totalInQueue"][-1]
+        self.environment.logData('totalInQueue', currentTotalInQueue-1)
         return nextRequest
 
     def logSize(self, size):

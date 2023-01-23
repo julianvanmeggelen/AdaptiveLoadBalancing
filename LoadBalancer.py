@@ -14,6 +14,7 @@ class LoadBalancer:
     def __init__(self, nServers, environment: Environment):
         self.nServers = nServers 
         self.environment = environment
+        self.environment.logData("totalInQueue", 0)
         self.serverList = [Server(environment=environment, id=i) for i in range(nServers)]
         self.currentServer = 0
     
@@ -25,9 +26,6 @@ class LoadBalancer:
         if self.currentServer >= self.nServers: self.currentServer = 0
         self.serverList[self.currentServer].assignRequest(request=request)
         self.currentServer += 1
-
-        nQueue = sum([server.queue.size for server in self.serverList])
-        self.environment.logData("totalInQueue", nQueue)
     
     def onPeriodEnd(self):
         """

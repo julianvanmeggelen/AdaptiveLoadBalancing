@@ -64,10 +64,12 @@ class Source():
         self.setArrivalsPerSecond(arrivalsPerSecond=arrivalsPerSecond)
         self.requestTypeProbs = [requestType[1] for requestType in self.requestTypes]
         self.requestTypeIndices = list(range(0,len(self.requestTypes)))
-
-
-
+        self.requestId = 0
         assert sum([requestType[0] for requestType in self.requestTypes]) == 1.0, "typeProbs of provides requestTypes must sum to 1"
+
+    def _getReqId(self):
+        self.requestId +=1
+        return self.requestId
 
     def setArrivalsPerSecond(self, arrivalsPerSecond):
         self.arrivalsPerSecond = arrivalsPerSecond
@@ -81,7 +83,7 @@ class Source():
         sampledRequestIndice = random.choices(self.requestTypeIndices, weights = self.requestTypeProbs)[0]
         _, typeMean, typeStd, typeTimeLimit = self.requestTypes[sampledRequestIndice]
         requestProcessingTime = random.gauss(mu=typeMean, sigma=typeStd)
-        request = Request(type=sampledRequestIndice, processingTime = requestProcessingTime, timeRequirement=typeTimeLimit, environment = self.environment)
+        request = Request(type=sampledRequestIndice, processingTime = requestProcessingTime, timeRequirement=typeTimeLimit, environment = self.environment, id = self._getReqId())
         #self.environment.logData("requestType", sampledRequestIndice)
         return request
 
@@ -112,7 +114,7 @@ class BatchedSource():
         self.requestTypeProbs = [requestType[1] for requestType in self.requestTypes]
         self.requestTypeIndices = list(range(0,len(self.requestTypes)))
         self.setArrivalsPerSecond(arrivalsPerSecond=arrivalsPerSecond)
-
+        self.requestId = 0
 
         assert len(requestTypes) == 2, "This source only works with two requesttypes"
         assert sum([requestType[0] for requestType in self.requestTypes]) == 1.0, "typeProbs of provides requestTypes must sum to 1"
@@ -122,12 +124,15 @@ class BatchedSource():
         self.samplingInterval = self.requestProb/arrivalsPerSecond
         self.nSamplesPerPeriod = round(self.periodLength/self.samplingInterval)
 
+    def _getReqId(self):
+        self.requestId +=1
+        return self.requestId
 
     def _generateRequests(self, requestTypeIndex, requestTimes):
         _, typeMean, typeStd, typeTimeLimit = self.requestTypes[requestTypeIndex]
         requestProcessingTimes = np.random.normal(typeMean, typeStd, len(requestTimes))
         for t, requestProcessingTime in zip(requestTimes,requestProcessingTimes) :
-            e = Event(t, lambda: self.loadBalancer.handleRequestArrival(Request(type=requestTypeIndex, processingTime = requestProcessingTime, timeRequirement=typeTimeLimit, environment = self.environment)))
+            e = Event(t, lambda: self.loadBalancer.handleRequestArrival(Request(type=requestTypeIndex, processingTime = requestProcessingTime, timeRequirement=typeTimeLimit, environment = self.environment, id = self._getReqId())))
             self.environment.scheduleEvent(e)
 
     def _onSampleEvent(self):

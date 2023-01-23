@@ -5,16 +5,21 @@ from Event import Event
 
 
 class Environment:
-    def __init__(self, stopTime):
+    def __init__(self, stopTime, usePrio = True):
         """
         Parameters
         ----------
         stopTime : float
             Time the simulation should be stopped
+        usePrio: bool
+            Set to false for higher performance but not taking into account priority of events
         """
         self.stopTime = stopTime
         self.currentTime = 0
-        self.eventQueue: SortedKeyList = SortedKeyList(key=lambda e: e.key) 
+        if usePrio:
+            self.eventQueue: SortedKeyList = SortedKeyList(key=lambda e: e.key)
+        else:
+            self.eventQueue: SortedKeyList = SortedKeyList(key=lambda e: e.time)
         self.debug = 0
         self.log = {} #dictionary for storage of arbitary statistics
         self.logTime = {} #store timestamps of logs
