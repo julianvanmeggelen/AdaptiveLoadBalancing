@@ -2,10 +2,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING: #only for typechecking
-    from Environment import Environment 
-    from Request import Request
+    from sim.Environment import Environment 
+    from sim.Request import Request
 
-from Server import Server
+from sim.Server import Server
 
 class LoadBalancer:
     """

@@ -3,10 +3,10 @@ from typing import TYPE_CHECKING
 from uuid import uuid4
 
 if TYPE_CHECKING: #only for typechecking
-    from Server import Server 
+    from sim.Server import Server 
 
-from Environment import Environment
-from Event import Event
+from sim.Environment import Environment
+from sim.Event import Event
 
 class Request:
 

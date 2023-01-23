@@ -1,11 +1,11 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 if TYPE_CHECKING: #only for typechecking
-    from LoadBalancer import LoadBalancer 
+    from sim.LoadBalancer import LoadBalancer 
 
-from Environment import Environment
-from Event import Event 
-from Request import Request
+from sim.Environment import Environment
+from sim.Event import Event 
+from sim.Request import Request
 import random
         
 import numpy as np

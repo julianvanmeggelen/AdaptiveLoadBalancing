@@ -1,10 +1,10 @@
 import unittest
-from Event import Event
-from Environment import Environment
-from Source import Source, TestLoadBalancer, EventClock
-from Request import Request
-from Server import Server
-from Server import Queue
+from sim.Event import Event
+from sim.Environment import Environment
+from sim.Source import Source, TestLoadBalancer, EventClock
+from sim.Request import Request
+from sim.Server import Server
+from sim.Server import Queue
 
 class TestValue:
     def __init__(self, val):
@@ -67,7 +67,7 @@ class EventClockTest(unittest.TestCase):
 
 class SourceTest(unittest.TestCase):
     def testEventScheduling(self):
-        from Source import DEFAULT_REQUEST_PROB
+        from sim.Source import DEFAULT_REQUEST_PROB
         stopTime = 10
         arrivalsPerSecond = 10
         samplingInterval = 0.1

@@ -6,7 +6,7 @@ from collections import OrderedDict
 if TYPE_CHECKING: #only for typechecking
     from Request import Request 
 
-from Environment import Environment
+from sim.Environment import Environment
 import math
 
 class Queue:

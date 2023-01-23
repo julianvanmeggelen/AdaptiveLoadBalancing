@@ -1,7 +1,7 @@
 from sortedcontainers import SortedKeyList
 import warnings
 
-from Event import Event
+from sim.Event import Event
 
 
 class Environment:

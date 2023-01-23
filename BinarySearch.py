@@ -1,13 +1,13 @@
-from Environment import Environment
-from LoadBalancer import LoadBalancer
-from Source import Source, ArrivalSchedule
+from sim.Environment import Environment
+from sim.LoadBalancer import LoadBalancer
+from sim.Source import Source, ArrivalSchedule, ExponentialSource
 import math
 import numpy as np
 
 def costCalculate(stopTime, nServers, arrivalsPerSecond, requestTypes, processCost = 1, cancelCost = -10, serverCost = -300):
     env = Environment(stopTime=stopTime)
     loadBalancer = LoadBalancer(nServers=nServers, environment=env)
-    source = Source(arrivalsPerSecond, requestTypes, loadBalancer, env)
+    source = ExponentialSource(arrivalsPerSecond, requestTypes, loadBalancer, env)
     env.run(debug=False)
     nCancelled = len(env.log['requestCancelled']) if 'requestCancelled' in env.log.keys() else 0
     cost = len(env.log['requestProcessed']) * processCost + nCancelled * cancelCost + stopTime/60/60*nServers*serverCost
