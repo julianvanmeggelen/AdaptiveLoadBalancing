@@ -23,7 +23,8 @@ class Environment:
         self.debug = 0
         self.log = {} #dictionary for storage of arbitary statistics
         self.logTime = {} #store timestamps of logs
-    
+        self.logPeriodIndex = {} # keep track for each key in the log, what is the index that the period started?
+
     def scheduleEvent(self, e: Event):
         """Add event to eventqueue
 
@@ -47,6 +48,16 @@ class Environment:
         e.execute()
         if self.debug: print(f"{self.currentTime} | Handled event at time {e.time} with name {e.name}")
 
+    def resetPeriod(self):
+        self.logPeriodIndex = self.logPeriodIndex = {k: len(vals) for k, vals in self.log.items()}  #set the start point of the period
+    
+    def getPeriodLog(self):
+        return {k:vals[self.logPeriodIndex[k]:] for k, vals in self.log.items()}
+    
+    def resetLog(self):
+        self.log = {key: [] for key in self.log.keys()}
+        self.logTime = {key: [] for key in self.log.keys()}
+
     def logData(self, key, data=1):
         """Log arbitrary data to the environment
         
@@ -61,6 +72,7 @@ class Environment:
         if key not in self.log.keys():
             self.log[key] = [data]
             self.logTime[key] = [self.currentTime]
+            self.logPeriodIndex[key] = 0
         else:
             self.log[key].append(data)
             self.logTime[key].append(self.currentTime)

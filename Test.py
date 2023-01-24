@@ -52,6 +52,35 @@ class  EnvironmentTest(unittest.TestCase):
         self.assertListEqual(env.log["test"], [1,2]) #test correct order
         self.assertListEqual(env.logTime["test"], [2,3]) #test correct timestamps
 
+    def testLogPeriod(self):
+        import numpy as np
+        env = Environment(stopTime=10)
+        data = []
+        for i in range(0,100):
+            data.append(i)
+            env.logData('test', i)
+        context  = env.getPeriodLog()
+        print((np.mean(context['test']), np.mean(data)))
+        self.assertEqual(np.mean(context['test']), np.mean(data))
+        env.resetPeriod() # reset the log
+
+        data = []
+        for i in range(50,100):
+            data.append(i)
+            env.logData('test', i)
+        context  = env.getPeriodLog()
+        print((np.mean(context['test']), np.mean(data)))
+
+        env.resetPeriod() # reset the log
+        data = []
+        for i in range(100,200):
+            data.append(i)
+            env.logData('test', i)
+        context  = env.getPeriodLog()
+        print((np.mean(context['test']), np.mean(data)))
+        self.assertEqual(np.mean(context['test']), np.mean(data))
+
+
 class EventClockTest(unittest.TestCase):
     def testEventClock(self):
         def add(a,b):
