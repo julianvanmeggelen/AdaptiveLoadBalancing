@@ -17,7 +17,22 @@ class LoadBalancer:
         self.environment.logData("totalInQueue", 0)
         self.serverList = [Server(environment=environment, id=i) for i in range(nServers)]
         self.currentServer = 0
-    
+
+    def _setNumberOfServers(self, newNumber):
+        self.environment.logData("numberOfServers", self.nServers) #log before
+
+        if newNumber > self.nServers:
+            diff = newNumber - self.nServers
+            newServers = [Server(environment=self.environment, id=i) for i in range(diff)]
+            self.serverList = self.serverList + newServers
+            self.currentServer = newNumber - 1
+        elif newNumber < self.nServers:
+            self.serverList = self.serverList[:newNumber]
+        
+        self.nServers = newNumber
+        #print(newNumber)
+        self.environment.logData("numberOfServers", self.nServers) # log after
+
     def handleRequestArrival(self, request: Request):
         """
         Round robin assignment
