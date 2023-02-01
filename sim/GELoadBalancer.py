@@ -139,10 +139,10 @@ class GreedyEpsilonLoadBalancerContextSampling(LoadBalancer):
             self.A = np.random.uniform(0,0.5,(6,6))
             self.B = np.random.uniform(0,0.5,(6,6))
         else:    
-            self.A = np.random.uniform(0,1,6)
-            self.B = np.random.uniform(0,1,6)
-        self.mu = np.array([0,0,0,0,0,0]) #for mv normal
-        self.cov = np.diag([1,1,1,1,1,1]) #for mv normal
+            self.A = np.random.uniform(0,1,1)
+            self.B = np.random.uniform(0,1,1)
+        self.mu = np.array([0]) #for mv normal
+        self.cov = np.diag([1]) #for mv normal
 
     def getEta(self):
         if callable(self.eta):
@@ -202,7 +202,7 @@ class GreedyEpsilonLoadBalancerContextSampling(LoadBalancer):
 
         return nServers
         
-    def updateModel(self, context, reward):
+    def updateModel(self, reward):
         #update the model using the context, nServers and observed reward
         if self.currentPeriod > 0:
             newY = np.array([reward])
@@ -223,7 +223,7 @@ class GreedyEpsilonLoadBalancerContextSampling(LoadBalancer):
         previousPeriodReward = self.getPreviousPeriodReward()
         self.environment.resetPeriod()
         self.environment.logData("reward", previousPeriodReward)
-        self.updateModel(previousPeriodContext, previousPeriodReward)
+        self.updateModel(previousPeriodReward)
         if self.currentPeriod>0:print(self.X.shape,self.y.shape)
         nextPeriodNServers = self.getNextPeriodNumberOfServers(previousPeriodContext)
         self._setNumberOfServers(nextPeriodNServers)
