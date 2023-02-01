@@ -49,6 +49,28 @@ class LoadBalancer:
         return
         #raise NotImplementedError
 
+class LoadBalancerShortestQueue(LoadBalancer):
+    """
+    Loadbalancer assigning to servers random
+    """
+    def __init__(self, nServers, environment: Environment):
+        super().__init__(nServers=nServers,environment=environment)
+    
+    def handleRequestArrival(self, request: Request):
+        """
+        Assign to shortest queue
+        """
+        self.environment.logData("arrivalEvent")
+        shortest = min(self.serverList, key=lambda server: server.queue.length)
+        shortest.assignRequest(request=request)        
+    
+    def onPeriodEnd(self):
+        """
+        This method will be called on the end of each period, this is the place where the next period number of servers is determined
+        """
+        return
+        #raise NotImplementedError
+
 
 
     

@@ -73,6 +73,7 @@ class Source():
         return self.requestId
 
     def setArrivalsPerSecond(self, arrivalsPerSecond):
+        self.environment.logData('arrivalsPerSecond', arrivalsPerSecond)
         self.arrivalsPerSecond = arrivalsPerSecond
         self.samplingInterval = self.requestProb/arrivalsPerSecond
         self.clock.interval = self.samplingInterval
@@ -136,6 +137,7 @@ class ExponentialSource():
 
     def setArrivalsPerSecond(self, arrivalsPerSecond):
         self.arrivalsPerSecond = arrivalsPerSecond
+        self.environment.logData('arrivalsPerSecond', arrivalsPerSecond)
 
     def _generateRequest(self):
         """
@@ -231,6 +233,41 @@ class ArrivalSchedule:
         nextPeriodRequestProb = self.arrivalSchedule[nextPeriodIndex]
         self.source.setArrivalsPerSecond(nextPeriodRequestProb)
         self.loadBalancer.onPeriodEnd()
+
+
+
+class AutoRegressiveArrivalSchedule(ArrivalSchedule):
+    """
+    Sets the arrival prob. for every period with length periodLength and notififies the loadBalancer that a new period has started.
+    Can be easily extended to emulate any arrival process. Possibly depending on historic simulation data.
+    """
+    def __init__(self, periodLength, arrivalSchedule: list, environment, source, loadBalancer, A: np.ndarray, maxArrivals:int):
+        super().__init__(periodLength, arrivalSchedule, environment, source, loadBalancer)
+        self.A = np.array(A)
+        self.maxArrivals = 20 if maxArrivals is None else maxArrivals
+        self.periodLength = periodLength
+    
+    def _sigmoid(self,a):
+        return 1/(1 + np.exp(-a))
+        
+    def determineNextPeriodArrivals(self, previousPeriodContext):
+        X = np.array(list(previousPeriodContext.values()))
+        nextPeriodArrivals = self.maxArrivals * self._sigmoid(X.T@self.A)
+        nextPeriodArrivals = X.T@self.A +random.normalvariate(0,100)
+        nextPeriodArrivals = nextPeriodArrivals/self.periodLength
+        print('npa', nextPeriodArrivals)
+        return nextPeriodArrivals
+
+    def nextPeriod(self):
+        nextPeriodIndex = self.currentPeriodIndex + 1
+        if nextPeriodIndex == self.nPeriods: #if at the end of the schedule go back to 0
+            nextPeriodIndex = 0
+        self.currentPeriodIndex = nextPeriodIndex
+        nextPeriodRequestProb = self.arrivalSchedule[nextPeriodIndex]
+        previousPeriodContext = self.loadBalancer.onPeriodEnd()
+        nextPeriodArrivals = self.determineNextPeriodArrivals(previousPeriodContext=previousPeriodContext)
+        self.source.setArrivalsPerSecond(nextPeriodArrivals)
+
 
 
 

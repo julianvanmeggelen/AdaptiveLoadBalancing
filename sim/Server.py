@@ -63,9 +63,10 @@ class Queue:
         return nextRequest
 
     def logSize(self, size):
-        size = self.__len__() if size is None else size
-        logKey = f"queueSize_{self.id}"
-        self.environment.logData(logKey, size)
+        #size = self.__len__() if size is None else size
+        #logKey = f"queueSize_{self.id}"
+        #self.environment.logData(logKey, size)
+        return 
 
     def __len__(self):
         return self.size

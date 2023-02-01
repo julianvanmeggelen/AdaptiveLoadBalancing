@@ -1,5 +1,5 @@
-import random
 from __future__ import annotations
+import random
 from typing import TYPE_CHECKING
 from sim.LoadBalancer import LoadBalancer
 
@@ -15,17 +15,16 @@ class LoadBalancerRandom(LoadBalancer):
     """
     def __init__(self, nServers, environment: Environment):
         super().__init__(nServers=nServers,environment=environment)
-        self.currentServer = random.randint(0,nServers)
+        self.currentServer = random.randint(0,nServers-1)
     
     def handleRequestArrival(self, request: Request):
         """
         Round robin assignment
         """
+        self.environment.logData("arrivalEvent")
         self.serverList[self.currentServer].assignRequest(request=request)
-        self.currentServer = random.randint(0,self.nServers)
-        
-        nQueue = sum([server.queue.size for server in self.serverList])
-        self.environment.logData("totalInQueue", nQueue)
+        self.currentServer = random.randint(0,self.nServers-1)
+    
     
     def onPeriodEnd(self):
         """
