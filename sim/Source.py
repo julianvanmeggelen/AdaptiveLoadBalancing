@@ -253,7 +253,7 @@ class AutoRegressiveArrivalSchedule(ArrivalSchedule):
     def determineNextPeriodArrivals(self, previousPeriodContext):
         X = np.array(list(previousPeriodContext.values()))
         nextPeriodArrivals = self.maxArrivals * self._sigmoid(X.T@self.A)
-        nextPeriodArrivals = X.T@self.A +random.normalvariate(0,100)
+        nextPeriodArrivals = X.T@self.A +random.normalvariate(0,400)
         nextPeriodArrivals = nextPeriodArrivals/self.periodLength
         print('npa', nextPeriodArrivals)
         return nextPeriodArrivals
@@ -269,7 +269,48 @@ class AutoRegressiveArrivalSchedule(ArrivalSchedule):
         self.source.setArrivalsPerSecond(nextPeriodArrivals)
 
 
+class QuadraticArrivalSchedule(ArrivalSchedule):
+    """
+    Sets the arrival prob. for every period with length periodLength and notififies the loadBalancer that a new period has started.
+    """
+    def __init__(self, periodLength, environment, source, loadBalancer,maxArrivals, linear=True):
+        super().__init__(periodLength, [10], environment, source, loadBalancer)
+        self.maxArrivals = 20 if maxArrivals is None else maxArrivals
+        self.periodLength = periodLength
+        self.linear = linear
+        if not linear:
+            self.A = np.random.uniform(0,0.5,(6,6))
+            self.B = np.random.uniform(0,0.5,(6,6))
+        else:    
+            self.A = np.random.uniform(0,1,6)
+            self.B = np.random.uniform(0,1,6)
+        self.mu = np.array([0,0,0,0,0,0]) #for mv normal
+        self.cov = np.diag([1,1,1,1,1,1]) #for mv normal
 
+    
+    def _sigmoid(self,a):
+        return 1/(1 + np.exp(-a))
+        
+    def determineNextPeriodArrivals(self):
+        x = np.random.multivariate_normal(self.mu, self.cov) #this is the context
+        if not self.linear:
+            arr = sigmoid(x.T@self.A@x) * self.maxArrivals #quadraric
+        else:
+            arr = sigmoid(x@self.A) * self.maxArrivals #linear
+        return x,arr
+
+    def nextPeriod(self):
+        nextPeriodIndex = self.currentPeriodIndex + 1
+        if nextPeriodIndex == self.nPeriods: #if at the end of the schedule go back to 0
+            nextPeriodIndex = 0
+        self.currentPeriodIndex = nextPeriodIndex
+        context, nextPeriodArrivals = self.determineNextPeriodArrivals()
+        self.loadBalancer.onPeriodEnd(context)
+
+        self.source.setArrivalsPerSecond(nextPeriodArrivals)
+
+def sigmoid(a):
+    return 1/(1+np.exp(-a))
 
 
     
