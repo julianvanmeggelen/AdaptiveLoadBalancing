@@ -282,10 +282,10 @@ class QuadraticArrivalSchedule(ArrivalSchedule):
             self.A = np.random.uniform(0,0.5,(6,6))
             self.B = np.random.uniform(0,0.5,(6,6))
         else:    
-            self.A = np.random.uniform(0,1,6)
-            self.B = np.random.uniform(0,1,6)
-        self.mu = np.array([0,0,0,0,0,0]) #for mv normal
-        self.cov = np.diag([1,1,1,1,1,1]) #for mv normal
+            self.A = np.random.uniform(0,1,1)
+            self.B = np.random.uniform(0,1,1)
+        self.mu = np.array([0]) #for mv normal
+        self.cov = np.diag([1]) #for mv normal
 
     
     def _sigmoid(self,a):
@@ -296,7 +296,7 @@ class QuadraticArrivalSchedule(ArrivalSchedule):
         if not self.linear:
             arr = sigmoid(x.T@self.A@x) * self.maxArrivals #quadraric
         else:
-            arr = sigmoid(x@self.A) * self.maxArrivals #linear
+            arr = sigmoid(x.T@self.A) * self.maxArrivals #linear
         return x,arr
 
     def nextPeriod(self):
