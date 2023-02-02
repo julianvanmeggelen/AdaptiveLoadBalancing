@@ -61,7 +61,7 @@ class LoadBalancerShortestQueue(LoadBalancer):
         Assign to shortest queue
         """
         self.environment.logData("arrivalEvent")
-        shortest = min(self.serverList, key=lambda server: server.queue.length)
+        shortest = min(self.serverList, key=lambda server: len(server.queue.queue))
         shortest.assignRequest(request=request)        
     
     def onPeriodEnd(self):
